@@ -2,8 +2,8 @@
 """Extra task E2: drive to a point.
 
 This node is your node from tasks 1 to 4 with one change: the command does not come from the
-keyboard but from command() below. Your kinematics and your odometry are used as they are, so finish
-those first.
+keyboard but from command() below. It uses the topic names, the kinematics and the odometry of your
+drive node as they are, so finish TODO 1 to 4 there first.
 
 Start the simulator for your own node, then this node instead of your drive node:
     ros2 launch ohm_odometry diff.launch.py

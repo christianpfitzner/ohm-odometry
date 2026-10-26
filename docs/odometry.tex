@@ -118,11 +118,20 @@ they have in the script.
 
 \newpage
 \section{Getting started}
-\paragraph{Build.} The simulator (\datei{ir-mecanum-lab}) and this lab (\datei{ohm-odometry}) lie side
-by side in the \datei{src/} folder of your workspace. Build both once, then source the workspace in
-every new terminal:
+\paragraph{Your own copy.} Fork \datei{ohm-odometry} on GitHub (button \emph{Fork} at the top right),
+then clone your fork and the simulator into the \datei{src/} folder of your workspace:
 \begin{lstlisting}
-colcon build --symlink-install --packages-select mecanum_lab ohm_odometry
+git clone git@github.com:<your-name>/ohm-odometry.git
+\end{lstlisting}
+\begin{lstlisting}
+git clone git@github.com:christianpfitzner/ir-mecanum-lab.git
+\end{lstlisting}
+Your work then lives in your own repository. Commit after every task and push, so nothing is lost at
+the end of the session.
+
+\paragraph{Build.} Build both once, then source the workspace in every new terminal:
+\begin{lstlisting}
+colcon build --symlink-install --packages-select mecanum_lab_interfaces mecanum_lab ohm_odometry
 \end{lstlisting}
 \begin{lstlisting}
 source install/setup.bash
@@ -416,8 +425,8 @@ Drive forward, sideways and in curves. The green outline still covers the robot.
 \section{Extra tasks}
 \label{sec:extra}
 Both tasks drive the robot with your own odometry instead of the keyboard. Each has its own node,
-\datei{student/square\_node.py} and \datei{student/goto\_node.py}. They take your kinematics and your
-odometry from tasks 1 to 4 and only replace the keyboard by a controller in \thema{command()};
+\datei{student/square\_node.py} and \datei{student/goto\_node.py}. They take the topic names, the
+kinematics and the odometry of your drive node from tasks 1 to 4 and only replace the keyboard by a controller in \thema{command()};
 \thema{self.pose} holds \((x, y, \phi)\) of your odometry. Set \thema{ROBOT} at the top of the file to
 \thema{"diff"} or \thema{"mecanum"}. Use \(\operatorname{wrap}(\alpha) = \operatorname{atan2}(\sin\alpha,
 \cos\alpha)\) to keep angles in \((-\pi, \pi]\).
