@@ -1,0 +1,30 @@
+{
+  "_comment": [
+    "LAB 'Kinematics and odometry', task 0: diff_demo.launch.py and mecanum_demo.launch.py.",
+    "",
+    "The same hall and sensors as config/lab_odometry.json, but the simulator's own kinematics turns",
+    "the keys into wheel speeds (pass-through). Everything drives correctly before anyone has",
+    "written a line — the reference the students' own nodes are compared with afterwards."
+  ],
+  "world": "open",
+  "passthrough": true,
+  "debug_truth": true,
+  "encoders": {
+    "enabled": true,
+    "rate": 50.0,
+    "ticks_per_rev": 1024
+  },
+  "gps": {
+    "gap": [
+      0.0,
+      1000000000.0
+    ]
+  },
+  "view": {
+    "layers": {
+      "ghost": true,
+      "trails": true,
+      "kf": true
+    }
+  }
+}

@@ -1,0 +1,53 @@
+% TikZ figure: mecanum drive from above, inside the world frame — the companion of diffdrive.tikz.
+% Signs as in CONTRACT 5: x forward, y left, phi counter-clockwise. Wheel order and roller axes as in
+% the simulator (mecanum_lab/render.py, ROLLERS): FL and RR rollers along (1,1), FR and RL along (1,-1).
+% Everything of the robot is a path, not a node: paths turn with the scope, nodes would not.
+\begin{tikzpicture}[
+  scale=0.85, every node/.style={font=\small},
+  axis/.style={-{Stealth[length=2.6mm]}, line width=1pt},
+  vel/.style={-{Stealth[length=2mm]}, draw=ohmred, line width=0.9pt},
+  dim/.style={{Stealth[length=1.5mm]}-{Stealth[length=1.5mm]}, draw=black!55,
+              line width=0.5pt, font=\footnotesize},
+]
+% world frame
+\draw[axis, black!60] (-0.4,0) -- (10.6,0) node[below left] {$x_W$};
+\draw[axis, black!60] (0,-0.4) -- (0,7.4) node[below left] {$y_W$};
+\node[below left, font=\footnotesize, text=black!60] at (0,0) {$W$};
+
+% pose of the robot
+\coordinate (P) at (4.8,3.5);
+\draw[dashed, black!40] (P) -- (P |- 0,0) node[below, text=black] {$x$};
+\draw[dashed, black!40] (P) -- (0,0 |- P) node[left, text=black] {$y$};
+\draw[dashed, black!40] ($(P)+(3.0,0)$) -- ++(2.2,0);       % heading reference, clear of the robot
+\draw[-{Stealth[length=2mm]}, black!70] ($(P)+(4.6,0)$) arc (0:30:4.6)
+  node[pos=0.5, right=1pt] {$\phi$};
+
+% one wheel: centre (#1,#2), roller slope #3 (+1: rollers along (1,1), -1: along (1,-1))
+\newcommand{\mwheel}[3]{%
+  \draw[line width=0.7pt, fill=black!25] ($(#1,#2)+(-0.45,-0.19)$) rectangle ($(#1,#2)+(0.45,0.19)$);
+  \begin{scope}
+    \clip ($(#1,#2)+(-0.45,-0.19)$) rectangle ($(#1,#2)+(0.45,0.19)$);
+    \foreach \t in {-0.6,-0.4,...,0.6}
+      \draw[black!70, line width=0.5pt] ($(#1,#2)+(\t-0.22,-0.22*#3)$) -- ($(#1,#2)+(\t+0.22,0.22*#3)$);
+  \end{scope}}
+
+\begin{scope}[shift={(P)}, rotate=30, scale=1.3]
+  \draw[line width=0.8pt, rounded corners=3pt, fill=black!4] (-1.65,-0.82) rectangle (1.65,0.82);
+  \mwheel{ 1.25}{ 1.03}{ 1}    % FL
+  \mwheel{ 1.25}{-1.03}{-1}    % FR
+  \mwheel{-1.25}{ 1.03}{-1}    % RL
+  \mwheel{-1.25}{-1.03}{ 1}    % RR
+  \node[font=\footnotesize] at ( 1.25, 1.62) {FL\,$\omega_0$};
+  \node[font=\footnotesize] at ( 1.25,-1.62) {FR\,$\omega_1$};
+  \node[font=\footnotesize] at (-1.25, 1.62) {RL\,$\omega_2$};
+  \node[font=\footnotesize] at (-1.25,-1.62) {RR\,$\omega_3$};
+  \fill[black] (0,0) circle (1.4pt);
+  \draw[axis] (0,0) -- (2.7,0) node[right] {$x_B$};
+  \draw[axis] (0,0) -- (0,2.3) node[above] {$y_B$};
+  \draw[vel] (0.25,-0.4) -- (1.05,-0.4) node[right, font=\footnotesize] {$v_x$};
+  \draw[vel] (-0.95,0.05) -- (-0.95,0.6) node[right, font=\footnotesize] {$v_y$};
+  \draw[vel] (0.34,0.1) arc (16:164:0.35) node[pos=0.5, above, font=\footnotesize] {$\omega$};
+  \draw[dim] (-1.25,-2.05) -- (1.25,-2.05) node[midway, fill=white, inner sep=1pt] {$2\,l_x$};
+  \draw[dim] (-2.15,-1.03) -- (-2.15,1.03) node[midway, fill=white, inner sep=1pt] {$2\,l_y$};
+\end{scope}
+\end{tikzpicture}

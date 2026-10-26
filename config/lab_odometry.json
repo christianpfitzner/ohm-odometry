@@ -1,0 +1,35 @@
+{
+  "_comment": [
+    "LAB 'Kinematics and odometry', the session's own programming: diff.launch.py and mecanum.launch.py.",
+    "",
+    "  world open         30 x 20 m of floor, no obstacle",
+    "  passthrough false  the keys alone drive nothing: the robot moves only on the wheel speeds a",
+    "                     node publishes — your inverse kinematics, or nothing at all",
+    "  encoders.enabled   /<robot>/joint_states, the wheel angles your odometry integrates",
+    "  debug_truth        /<robot>/truth, the exact pose your odometry is compared with",
+    "  gps.gap            no GPS fix for the whole run",
+    "",
+    "config/lab_odometry_demo.json is the same with the simulator's own kinematics (task 0)."
+  ],
+  "world": "open",
+  "passthrough": false,
+  "debug_truth": true,
+  "encoders": {
+    "enabled": true,
+    "rate": 50.0,
+    "ticks_per_rev": 1024
+  },
+  "gps": {
+    "gap": [
+      0.0,
+      1000000000.0
+    ]
+  },
+  "view": {
+    "layers": {
+      "ghost": true,
+      "trails": true,
+      "kf": true
+    }
+  }
+}

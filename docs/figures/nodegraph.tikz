@@ -1,0 +1,30 @@
+% TikZ figure: the two nodes and the five topics between them, drawn like rqt_graph
+% (nodes as ellipses, topics as boxes). Topic names are left out on purpose: they are task 0.
+\begin{tikzpicture}[
+  font=\small,
+  node/.style={ellipse, draw=black!70, line width=0.8pt, fill=ohmred!7, minimum height=1.3cm,
+               minimum width=3.0cm, align=center},
+  topic/.style={rectangle, draw=black!55, fill=black!3, minimum width=4.6cm, minimum height=0.95cm,
+                align=center, inner sep=2pt},
+  flow/.style={-{Stealth[length=2.2mm]}, line width=0.7pt, draw=black!70},
+]
+\node[node] (sim) at (0, 0) {\texttt{/mecanum\_sim}\\[-1pt]{\footnotesize simulator + window}};
+\node[node, fill=ohmgreen!12] (me) at (11.0, 0) {\texttt{/diff\_drive}\\[-1pt]{\footnotesize your node}};
+
+\node[topic] (enc) at (5.5,  2.6) {wheel encoders\\[-1pt]{\scriptsize\texttt{sensor\_msgs/JointState}, 50 Hz}};
+\node[topic] (key) at (5.5,  1.4) {keyboard command\\[-1pt]{\scriptsize\texttt{geometry\_msgs/Twist}}};
+\node[topic] (tru) at (5.5,  0.2) {true pose\\[-1pt]{\scriptsize\texttt{geometry\_msgs/PoseStamped}}};
+\node[topic] (whl) at (5.5, -1.2) {wheel speeds\\[-1pt]{\scriptsize\texttt{std\_msgs/Float64MultiArray}, 50 Hz}};
+\node[topic] (est) at (5.5, -2.4) {your pose (green outline)\\[-1pt]
+  {\scriptsize\texttt{geometry\_msgs/PoseWithCovarianceStamped}}};
+
+\foreach \t in {enc, key, tru} {
+  \draw[flow] (sim) -- (\t.west);
+  \draw[flow] (\t.east) -- (me);
+}
+\foreach \t in {whl, est} {
+  \draw[flow] (me) -- (\t.east);
+  \draw[flow] (\t.west) -- (sim);
+}
+\node[font=\footnotesize, text=black!60, align=center] at (5.5, 3.55) {topic names: see task 0};
+\end{tikzpicture}

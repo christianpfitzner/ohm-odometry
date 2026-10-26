@@ -1,0 +1,38 @@
+% TikZ figure: differential drive from above, inside the world frame.
+% Signs as in CONTRACT 5: x forward, y left, phi counter-clockwise; left wheel at y = +b/2.
+% Everything of the robot is a path, not a node: paths turn with the scope, nodes would not.
+\begin{tikzpicture}[
+  scale=0.95, every node/.style={font=\small},
+  axis/.style={-{Stealth[length=2.6mm]}, line width=1pt},
+  vel/.style={-{Stealth[length=2mm]}, draw=ohmred, line width=0.9pt},
+  dim/.style={{Stealth[length=1.5mm]}-{Stealth[length=1.5mm]}, draw=black!55,
+              line width=0.5pt, font=\footnotesize},
+]
+% world frame
+\draw[axis, black!60] (-0.4,0) -- (9.4,0) node[below left] {$x_W$};
+\draw[axis, black!60] (0,-0.4) -- (0,6.0) node[below left] {$y_W$};
+\node[below left, font=\footnotesize, text=black!60] at (0,0) {$W$};
+
+% pose of the robot, drawn first so the robot covers the dashed lines
+\coordinate (P) at (4.4,2.6);
+\draw[dashed, black!40] (P) -- (P |- 0,0) node[below, text=black] {$x$};
+\draw[dashed, black!40] (P) -- (0,0 |- P) node[left, text=black] {$y$};
+\draw[dashed, black!40] ($(P)+(1.7,0)$) -- ++(2.0,0);       % heading reference, clear of the robot
+\draw[-{Stealth[length=2mm]}, black!70] ($(P)+(3.2,0)$) arc (0:30:3.2)
+  node[pos=0.5, right=1pt] {$\phi$};
+
+\begin{scope}[shift={(P)}, rotate=30]
+  \draw[line width=0.8pt, rounded corners=3pt, fill=black!4] (-0.9,-1.0) rectangle (1.2,1.0);
+  \draw[line width=0.7pt, fill=black!30] (-0.55, 1.08) rectangle (0.55, 1.42);   % left wheel
+  \draw[line width=0.7pt, fill=black!30] (-0.55,-1.42) rectangle (0.55,-1.08);   % right wheel
+  \draw[black!60] (0.95,0) circle (0.12);                                        % caster
+  \fill[black] (0,0) circle (1.4pt);
+  \draw[axis] (0,0) -- (2.4,0) node[right] {$x_B$};
+  \draw[axis] (0,0) -- (0,2.4) node[above] {$y_B$};
+  \draw[vel] (0.6, 1.25) -- (1.4, 1.25) node[right, font=\footnotesize] {$v_l$};
+  \draw[vel] (0.6,-1.25) -- (2.0,-1.25) node[below right, font=\footnotesize] {$v_r$};
+  \node[font=\footnotesize] at (-0.8, 1.25) {L};
+  \node[font=\footnotesize] at (-0.8,-1.25) {R};
+  \draw[dim] (-1.3,-1.25) -- (-1.3,1.25) node[midway, fill=white, inner sep=1pt] {$b$};
+\end{scope}
+\end{tikzpicture}

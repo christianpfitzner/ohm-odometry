@@ -1,0 +1,477 @@
+% Lab 1 of Intelligent Robotics (ASY2): kinematics and odometry of a differential and a mecanum drive.
+% Build: make  (latexmk -pdf). Figures are TikZ files in figures/, no external graphics.
+\documentclass[11pt,a4paper,parskip=half]{scrartcl}
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[sfdefault,lining]{FiraSans}
+\usepackage[scale=0.88]{FiraMono}
+\usepackage[a4paper,left=2.4cm,right=2.4cm,top=2.6cm,bottom=2.6cm,headsep=0.8cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,array}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,calc,shapes.geometric}
+\usepackage[skins,breakable]{tcolorbox}
+\usepackage{fontawesome5}
+\usepackage[font=small,labelfont={bf,color=ohmred},skip=4pt]{caption}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage[headsepline=0.4pt]{scrlayer-scrpage}
+\usepackage[colorlinks=true,linkcolor=ohmred,urlcolor=ohmred]{hyperref}
+\usepackage{cleveref}
+
+% ---------------------------------------------------------------- colours and headings
+\definecolor{ohmred}{HTML}{C8372D}
+\definecolor{ohmgreen}{HTML}{2E8B57}
+\definecolor{ohmamber}{HTML}{D98E04}
+\definecolor{ohmgrey}{HTML}{5A5A5A}
+\addtokomafont{disposition}{\color{ohmred}}
+\addtokomafont{section}{\Large}
+\addtokomafont{subsection}{\large}
+\setkomafont{pageheadfoot}{\small\color{ohmgrey}}
+\setkomafont{pagenumber}{\small\bfseries\color{ohmred}}
+\clearpairofpagestyles
+\ihead{Intelligent Robotics (ASY2) · Lab 1}
+\ohead{Kinematics and odometry}
+\ofoot{\pagemark}
+\pagestyle{scrheadings}
+
+\lstset{basicstyle=\ttfamily\small, columns=fullflexible, keepspaces=true,
+        showstringspaces=false, breaklines=true, frame=none, backgroundcolor=\color{black!5},
+        xleftmargin=8pt, xrightmargin=8pt, framexleftmargin=6pt, framexrightmargin=6pt,
+        aboveskip=4pt, belowskip=4pt}
+
+\newcommand{\thema}[1]{\texttt{#1}}
+\newcommand{\datei}[1]{\texttt{#1}}
+\newcommand{\minutes}[1]{\hfill{\normalsize\mdseries\color{ohmgrey}\faClock[regular]~#1 min}}
+
+% ---------------------------------------------------------------- boxes
+\tcbset{base/.style={enhanced, breakable, boxrule=0pt, arc=1.5pt, left=8pt, right=8pt,
+        top=5pt, bottom=5pt, before skip=8pt, after skip=8pt}}
+\newtcolorbox{todo}[1]{base, colback=ohmred!5, borderline west={2.5pt}{0pt}{ohmred},
+        title={\faPen~#1}, coltitle=ohmred, colbacktitle=ohmred!5, fonttitle=\bfseries,
+        attach title to upper={\quad}}
+\newtcolorbox{script}[1]{base, colback=black!3, borderline west={2.5pt}{0pt}{ohmgrey},
+        title={\faBook~Lecture script, #1}, coltitle=ohmgrey, colbacktitle=black!3,
+        fonttitle=\small\bfseries, toptitle=2pt, bottomtitle=0pt}
+\newtcolorbox{note}{base, colback=ohmamber!8, borderline west={2.5pt}{0pt}{ohmamber}}
+\newtcolorbox{checkpoint}{base, colback=ohmgreen!7, borderline west={2.5pt}{0pt}{ohmgreen},
+        title={\faCheckCircle[regular]~Checkpoint}, coltitle=ohmgreen, colbacktitle=ohmgreen!7,
+        fonttitle=\bfseries, attach title to upper={\quad}}
+
+\setlist[enumerate,1]{leftmargin=*,itemsep=3pt,topsep=2pt}
+\setlist[itemize,1]{leftmargin=*,itemsep=2pt,topsep=2pt}
+
+\begin{document}
+\sloppy
+
+% ---------------------------------------------------------------- title
+\begin{tcolorbox}[enhanced, colback=ohmred, colframe=ohmred, arc=0pt, left=14pt, right=14pt,
+                  top=12pt, bottom=12pt, fontupper=\color{white}]
+  {\small Intelligent Robotics (ASY2) · Lab 1}\\[6pt]
+  {\LARGE\bfseries Kinematics and odometry}\\[4pt]
+  {\large A differential drive and a mecanum drive as ROS\,2 nodes}
+\end{tcolorbox}
+
+\noindent
+\begin{tabular}{@{}>{\color{ohmgrey}}l l@{\hspace{2.4em}}>{\color{ohmgrey}}l l@{}}
+  \faClock[regular]~Duration & 180 minutes & \faUsers~Work in & pairs \\
+  \faBook~Script & Cycle 1, sections 1.1 and 1.2 & \faFolderOpen[regular]~Files & \datei{ohm-odometry/student/}
+\end{tabular}
+
+\section{Overview}
+You write two ROS\,2 nodes for a simulated robot, one for a differential drive and one for a
+mecanum drive. Each node does three things:
+\begin{itemize}
+  \item it turns the keyboard command into wheel speeds (inverse kinematics),
+  \item it turns the measured wheel speeds back into the speed of the robot (forward kinematics),
+  \item it adds up these speeds to a position (odometry).
+\end{itemize}
+The node talks to the simulator only through ROS topics. Which topics these are, you find out
+yourself.
+
+\begin{table}[ht]\centering
+\caption{Schedule.}
+\label{tab:schedule}
+\begin{tabular}{@{}rll@{}}
+\toprule
+min & task & done when \\
+\midrule
+0--20 & \cref{sec:task0} Explore the simulator & \cref{tab:interface} is filled in \\
+20--55 & \cref{sec:task1} Differential drive: kinematics & the robot drives with the keys \\
+55--85 & \cref{sec:task2} Differential drive: odometry & the green outline follows the robot \\
+85--95 & break & \\
+95--130 & \cref{sec:task3} Mecanum drive: kinematics & the robot drives sideways with the keys \\
+130--155 & \cref{sec:task4} Mecanum drive: odometry & the green outline follows the robot \\
+155--180 & \cref{sec:extra} Extra tasks & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Notation} as in the script: pose \(\mathbf p = (x, y, \phi)^{\mathsf T}\), body twist
+\(\xi = (v_x, v_y, \omega)^{\mathsf T}\). The \(x\)-axis points forward, \(y\) to the \textbf{left}, and the
+heading \(\phi\) counts counter-clockwise. Speeds are in \(\mathrm{m/s}\) and \(\mathrm{rad/s}\), wheel
+speeds in \(\mathrm{rad/s}\). The equations you need are repeated in the tasks, with the numbers
+they have in the script.
+
+\newpage
+\section{Getting started}
+\paragraph{Build.} The simulator (\datei{ir-mecanum-lab}) and this lab (\datei{ohm-odometry}) lie side
+by side in the \datei{src/} folder of your workspace. Build both once, then source the workspace in
+every new terminal:
+\begin{lstlisting}
+colcon build --symlink-install --packages-select mecanum_lab ohm_odometry
+\end{lstlisting}
+\begin{lstlisting}
+source install/setup.bash
+\end{lstlisting}
+You do not need to build again after a change to your node. Just start it again.
+
+\paragraph{Two ways to start the simulator.}
+\begin{itemize}
+  \item \thema{diff\_demo.launch.py} and \thema{mecanum\_demo.launch.py}: the simulator uses its own
+        kinematics. The keys drive the robot, no node of yours is needed.
+  \item \thema{diff.launch.py} and \thema{mecanum.launch.py}: the robot moves only on the wheel speeds
+        your node sends. Without your node it stands still, with wrong kinematics it drives wrong.
+\end{itemize}
+
+\paragraph{Your files.} \datei{student/diff\_drive\_node.py} for tasks 1 and 2,
+\datei{student/mecanum\_drive\_node.py} for tasks 3 and 4. Each is a complete ROS\,2 node. You only
+change the lines marked \thema{TODO}; subscribing, publishing and reading the messages are already
+there. Your node runs in a second terminal:
+\begin{lstlisting}
+ros2 run ohm_odometry diff_drive_node.py
+\end{lstlisting}
+
+\paragraph{What the node does.} 50 times per second the simulator sends the wheel encoders. For each
+message the node computes the wheel speeds, calls your forward kinematics and your odometry step,
+and publishes the new pose. The simulator draws it as a green outline of the robot, with a line for
+the heading and a green line for the path. Also 50 times per second, the node takes the last keyboard
+command, calls your inverse kinematics and publishes the wheel speeds.
+
+\begin{figure}[ht]
+  \centering
+  \input{figures/nodegraph.tikz}
+  \caption{The simulator and your node, drawn like \thema{rqt\_graph}: nodes are ellipses, topics are
+    boxes, arrows point from publisher to subscriber.}
+  \label{fig:graph}
+\end{figure}
+
+\newpage
+\section{Task 0: explore the simulator\minutes{20}}
+\label{sec:task0}
+\begin{enumerate}
+  \item Start the simulator with its own kinematics:
+\begin{lstlisting}
+ros2 launch ohm_odometry diff_demo.launch.py
+\end{lstlisting}
+        Click into the window and drive with \thema{w}/\thema{s} (forward, back) and
+        \thema{q}/\thema{e} (turn). What happens with \thema{a}/\thema{d} (sideways)?
+  \item In a second terminal, list the topics and look at each one in \cref{tab:interface}:
+\begin{lstlisting}
+ros2 topic list
+\end{lstlisting}
+\begin{lstlisting}
+ros2 topic info -v <topic>
+\end{lstlisting}
+  \item Drive forward and watch the encoder message. Which numbers change? How often does it arrive?
+\begin{lstlisting}
+ros2 topic echo <topic>
+\end{lstlisting}
+\begin{lstlisting}
+ros2 topic hz <topic>
+\end{lstlisting}
+  \item Open \thema{rqt\_graph} and switch off the filters \emph{Dead sinks} and \emph{Leaf topics}.
+        Compare with \cref{fig:graph}. What is still missing?
+  \item Stop the simulator (Ctrl-C) and start \thema{mecanum\_demo.launch.py}. What changes in the
+        encoder message?
+\end{enumerate}
+
+\begin{table}[ht]\centering
+\renewcommand{\arraystretch}{2.0}
+\caption{The topics between your node and the simulator. Fill in.}
+\label{tab:interface}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.2cm}p{3.9cm}p{4.4cm}p{1.3cm}@{}}
+\toprule
+& topic name & message type & rate \\
+\midrule
+wheel encoders & & & \\
+keyboard command & & & \\
+true pose of the robot & & & \\
+wheel speeds (your node) & & & \\
+pose of your odometry & & & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{note}
+The last two topics have no publisher yet, the simulator only listens to them. They still show up in
+\thema{ros2 topic list}. Your pose goes to the topic of type \thema{PoseWithCovarianceStamped}.
+\end{note}
+
+\newpage
+\section{Task 1: differential drive, kinematics\minutes{35}}
+\label{sec:task1}
+\begin{figure}[ht]
+  \centering
+  \input{figures/diffdrive.tikz}
+  \caption{Differential drive at the pose \((x, y, \phi)\). The wheels sit \(b/2\) left and right of the
+    centre. Compare figure 1.4 of the script.}
+  \label{fig:diff}
+\end{figure}
+
+Stop the demo and start the simulator for your own node. The robot no longer reacts to the keys.
+\begin{lstlisting}
+ros2 launch ohm_odometry diff.launch.py
+\end{lstlisting}
+
+\begin{script}{section 1.2.2}
+With the speeds \(v_l, v_r\) at which the left and the right wheel roll, and the track \(b\):
+\begin{equation}
+  v = \frac{v_r + v_l}{2}, \qquad \omega = \frac{v_r - v_l}{b}
+  \qquad\Rightarrow\qquad
+  v_l = v - \omega\,\frac b2, \qquad v_r = v + \omega\,\frac b2 .
+  \tag{1.30}
+\end{equation}
+\end{script}
+
+\begin{todo}{TODO 1}
+Write the topic names of \cref{tab:interface} into the top of \datei{student/diff\_drive\_node.py}.
+\end{todo}
+
+\begin{todo}{TODO 2: inverse kinematics}
+\thema{inverse\_kinematics(v, omega)} with (1.30). It gives \(v_l, v_r\) in \(\mathrm{m/s}\), the
+simulator wants the wheels to turn at \(w\) in \(\mathrm{rad/s}\). A wheel with radius \(r_w\) that
+rolls at \(v\) turns at \(w = v / r_w\). In the code, \(b\) is \thema{B} and \(r_w\) is \thema{R}.
+\end{todo}
+
+Start your node and drive. Forward: both wheels turn forward at the same speed. \thema{q} (turn
+left): the left wheel turns backward, the right one forward. \thema{ros2 topic echo} on your
+wheel-speed topic shows the numbers.
+
+\begin{todo}{TODO 3: forward kinematics}
+\thema{forward\_kinematics(w\_left, w\_right)}: the left half of (1.30). Turn the wheel speeds back
+into rolling speeds first.
+\end{todo}
+
+\begin{checkpoint}
+The robot drives forward with \thema{w} and turns left with \thema{q}. \thema{rqt\_graph} looks like
+\cref{fig:graph}.
+\end{checkpoint}
+
+\newpage
+\section{Task 2: differential drive, odometry\minutes{30}}
+\label{sec:task2}
+Each encoder message is one step of \(\Delta t\) seconds. Your forward kinematics gives \(v\) and
+\(\omega\) for it; the odometry adds up the steps to a pose.
+
+\begin{script}{section 1.2.2}
+Distance of the wheels and of the kinematic centre:
+\begin{equation}
+  \Delta s_l = v_l\,\Delta t, \qquad \Delta s_r = v_r\,\Delta t, \qquad
+  \Delta s_k = \frac{\Delta s_l + \Delta s_r}{2}.
+  \tag{1.27}
+\end{equation}
+Radius of the arc and change of the heading:
+\begin{equation}
+  r = \frac b2 \cdot \frac{\Delta s_r + \Delta s_l}{\Delta s_r - \Delta s_l}, \qquad
+  \Delta\phi = \frac{\Delta s_r - \Delta s_l}{b}.
+  \tag{1.28}
+\end{equation}
+Pose update, with \(\phi_0\) the heading before the step:
+\begin{equation}
+  \Delta s = 2r\sin\!\Big(\frac{\Delta\phi}{2}\Big), \qquad
+  \Delta x = \Delta s\cos\!\Big(\frac{\Delta\phi}{2} + \phi_0\Big), \qquad
+  \Delta y = \Delta s\sin\!\Big(\frac{\Delta\phi}{2} + \phi_0\Big).
+  \tag{1.29}
+\end{equation}
+\end{script}
+
+\begin{todo}{TODO 4: odometry step}
+\thema{odometry\_step(x, y, phi, v, omega, dt)} with (1.27) to (1.29). In the function you have \(v\)
+and \(\omega\), so \(\Delta s_k = v\,\Delta t\), \(\Delta\phi = \omega\,\Delta t\) and
+\(r = \Delta s_k / \Delta\phi\).
+\end{todo}
+
+\begin{note}
+When the robot drives straight, \(\Delta\phi = 0\) and the radius is infinite: Python divides by zero.
+What is \(\Delta s\) in that case? Handle it with an \thema{if}.
+\end{note}
+
+Start your node and drive. Press \thema{t} in the window to show the true path of the robot next to
+the green path of your odometry. While the robot stands still, compare the two poses:
+\begin{lstlisting}
+ros2 topic echo <true pose topic> --once
+\end{lstlisting}
+\begin{lstlisting}
+ros2 topic echo <your pose topic> --once
+\end{lstlisting}
+
+\begin{checkpoint}
+After a minute of driving in curves and straight lines, the green outline still covers the robot.
+\end{checkpoint}
+
+\newpage
+\section{Task 3: mecanum drive, kinematics\minutes{35}}
+\label{sec:task3}
+Stop the simulator and your node, then start both for the mecanum robot (the demo is
+\thema{mecanum\_demo.launch.py}):
+\begin{lstlisting}
+ros2 launch ohm_odometry mecanum.launch.py
+\end{lstlisting}
+\begin{lstlisting}
+ros2 run ohm_odometry mecanum_drive_node.py
+\end{lstlisting}
+TODO 1, the topic names, is the same as in task 1.
+
+\begin{figure}[ht]
+  \centering
+  \resizebox{0.62\linewidth}{!}{\input{figures/mecanum.tikz}}
+  \caption{Mecanum drive at the pose \((x, y, \phi)\), rollers in X layout. Compare figure 1.11 of the
+    script.}
+  \label{fig:mecanum}
+\end{figure}
+
+\begin{script}{section 1.2.6}
+Wheels \(\omega_0\) front left, \(\omega_1\) front right, \(\omega_2\) rear left, \(\omega_3\) rear right,
+wheel radius \(r\), half distances \(l_x, l_y\) (\thema{R}, \thema{LX}, \thema{LY} in the code).
+\begin{equation}
+  \begin{pmatrix}\omega_0\\ \omega_1\\ \omega_2\\ \omega_3\end{pmatrix} = \frac 1r
+  \begin{pmatrix}
+     1 & -1 & -(l_x + l_y)\\
+    -1 & -1 & -(l_x + l_y)\\
+     1 &  1 & -(l_x + l_y)\\
+    -1 &  1 & -(l_x + l_y)
+  \end{pmatrix}
+  \begin{pmatrix} v_x\\ v_y\\ \omega \end{pmatrix}
+  \tag{1.39}
+\end{equation}
+\begin{equation}
+  \begin{pmatrix} v_x\\ v_y\\ \omega \end{pmatrix} = \frac r4
+  \begin{pmatrix}
+     1 & -1 & 1 & -1\\
+    -1 & -1 & 1 &  1\\
+    \frac{-1}{l_x + l_y} & \frac{-1}{l_x + l_y} & \frac{-1}{l_x + l_y} & \frac{-1}{l_x + l_y}
+  \end{pmatrix}
+  \begin{pmatrix}\omega_0\\ \omega_1\\ \omega_2\\ \omega_3\end{pmatrix}
+  \tag{1.40}
+\end{equation}
+\end{script}
+
+\newpage
+\begin{note}
+\textbf{The right wheels count the other way round.} In the script, \(\omega_1\) and \(\omega_3\) are
+negative when the robot drives forward, as on a robot whose right motors are mounted mirrored. In the
+simulator every wheel is positive when it rolls forward. So
+\(w_\text{FR} = -\omega_1\) and \(w_\text{RR} = -\omega_3\).
+\end{note}
+
+\begin{todo}{TODO 2: inverse kinematics}
+\thema{inverse\_kinematics(vx, vy, omega)} with (1.39) and the note above. The line for the front left
+wheel is already there.
+\end{todo}
+
+\begin{todo}{TODO 3: forward kinematics}
+\thema{forward\_kinematics(w\_fl, w\_fr, w\_rl, w\_rr)} with (1.40). Use \(\omega_1 = -w_\text{FR}\) and
+\(\omega_3 = -w_\text{RR}\).
+\end{todo}
+
+\begin{checkpoint}
+Forward, sideways (\thema{a}/\thema{d}) and turning each work without the other two motions.
+\end{checkpoint}
+
+\newpage
+\section{Task 4: mecanum drive, odometry\minutes{25}}
+\label{sec:task4}
+The mecanum robot also moves sideways. Its displacement \((v_x\,\Delta t,\; v_y\,\Delta t)\) is given
+in the frame of the robot and has to be rotated into the frame of the hall with \(\mathbf R(\phi)\),
+the rotation matrix (1.6) of the script. Taking the heading in the middle of the step,
+\(\bar\phi = \phi_k + \Delta\phi/2\) with \(\Delta\phi = \omega\,\Delta t\), as in (1.29):
+\begin{equation}
+  \begin{pmatrix} x \\ y \end{pmatrix}_{k+1} =
+  \begin{pmatrix} x \\ y \end{pmatrix}_{k} +
+  \mathbf R(\bar\phi) \begin{pmatrix} v_x \\ v_y \end{pmatrix} \Delta t ,
+  \qquad
+  \phi_{k+1} = \phi_k + \Delta\phi ,
+  \qquad
+  \mathbf R(\phi) = \begin{pmatrix}\cos\phi & -\sin\phi\\ \sin\phi & \cos\phi\end{pmatrix}.
+  \label{eq:odom}
+\end{equation}
+For \(v_y = 0\) this is the step of task 2. (The exact step along the arc is shorter by the factor
+\(\sin(\Delta\phi/2)/(\Delta\phi/2)\). At 50 steps per second that factor differs from 1 by less than
+\(10^{-4}\).)
+
+\begin{todo}{TODO 4: odometry step}
+\thema{odometry\_step(x, y, phi, vx, vy, omega, dt)}: multiply out \cref{eq:odom} and write the three
+lines for \(x\), \(y\) and \(\phi\).
+\end{todo}
+
+\begin{checkpoint}
+Drive forward, sideways and in curves. The green outline still covers the robot.
+\end{checkpoint}
+
+\newpage
+\section{Extra tasks}
+\label{sec:extra}
+Both tasks drive the robot with your own odometry instead of the keyboard. Each has its own node,
+\datei{student/square\_node.py} and \datei{student/goto\_node.py}. They take your kinematics and your
+odometry from tasks 1 to 4 and only replace the keyboard by a controller in \thema{command()};
+\thema{self.pose} holds \((x, y, \phi)\) of your odometry. Set \thema{ROBOT} at the top of the file to
+\thema{"diff"} or \thema{"mecanum"}. Use \(\operatorname{wrap}(\alpha) = \operatorname{atan2}(\sin\alpha,
+\cos\alpha)\) to keep angles in \((-\pi, \pi]\).
+
+Start the matching simulator and the node instead of your drive node, for example:
+\begin{lstlisting}
+ros2 run ohm_odometry square_node.py
+\end{lstlisting}
+
+\subsection*{E1: drive a square by odometry}
+TODO E1a and E1b in \datei{square\_node.py}. Side length \(a = 1\,\mathrm{m}\). Store the pose \((x_s, y_s, \phi_s)\) at the start of every side
+and every corner.
+\begin{itemize}
+  \item \textbf{Differential drive.} Side: \(v = 0.2\,\mathrm{m/s}\), \(\omega = 0\), until
+        \begin{equation}
+          d = \sqrt{(x - x_s)^2 + (y - y_s)^2} \;\ge\; a .
+          \label{eq:side}
+        \end{equation}
+        Corner: \(v = 0\), \(\omega = 0.5\,\mathrm{rad/s}\), until
+        \(\left|\operatorname{wrap}(\phi - \phi_s)\right| \ge \pi/2\). Four sides, four corners.
+  \item \textbf{Mecanum drive.} The robot needs no corners. Drive the four sides with
+        \begin{equation*}
+          (v_x, v_y) = (0.2, 0),\quad (0, 0.2),\quad (-0.2, 0),\quad (0, -0.2)\ \mathrm{m/s},
+        \end{equation*}
+        each until \cref{eq:side} holds.
+\end{itemize}
+How far from its start does the robot end, measured with the true pose? Where does the error come from?
+
+\subsection*{E2: drive to a point}
+TODO E2a to E2c in \datei{goto\_node.py}. Goal \(\mathbf g = (x_g, y_g)\), here 2\,m in front of and
+1\,m to the left of the start.
+Error in the hall:
+\begin{equation}
+  \Delta x = x_g - x, \qquad \Delta y = y_g - y, \qquad \rho = \sqrt{\Delta x^2 + \Delta y^2}.
+\end{equation}
+Stop when \(\rho < 0.05\,\mathrm{m}\).
+\begin{itemize}
+  \item \textbf{Differential drive.} Angle between the heading and the direction to the goal:
+        \begin{equation}
+          \alpha = \operatorname{wrap}\!\big(\operatorname{atan2}(\Delta y, \Delta x) - \phi\big), \qquad
+          v = k_\rho\,\rho\cos\alpha, \qquad \omega = k_\alpha\,\alpha,
+        \end{equation}
+        with \(k_\rho = 0.5\,\mathrm{s^{-1}}\), \(k_\alpha = 1.5\,\mathrm{s^{-1}}\) and \(v\) limited to
+        \(0.3\,\mathrm{m/s}\). The factor \(\cos\alpha\) slows the robot down while it still points
+        away from the goal.
+  \item \textbf{Mecanum drive.} Rotate the error into the frame of the robot with
+        \(\mathbf R^{-1} = \mathbf R^{\mathsf T}\) (script 1.1.6) and drive straight at the goal:
+        \begin{equation}
+          \begin{pmatrix} e_x \\ e_y \end{pmatrix} = \mathbf R(\phi)^{\mathsf T}
+          \begin{pmatrix} \Delta x \\ \Delta y \end{pmatrix}, \qquad
+          v_x = k_\rho\,e_x, \qquad v_y = k_\rho\,e_y, \qquad \omega = 0 .
+        \end{equation}
+        Limit \(\sqrt{v_x^2 + v_y^2}\) to \(0.3\,\mathrm{m/s}\) by scaling both components.
+\end{itemize}
+Compare the paths of both robots to the same goal.
+
+\end{document}
